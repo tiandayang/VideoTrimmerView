@@ -132,12 +132,13 @@ class VideoTrimmerView: UIView {
             imageCollectionView.contentInsetAdjustmentBehavior = .never
         }
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(PanAction))
+        panGesture.delegate = self
         addGestureRecognizer(panGesture)
     }
 
 }
 
-extension VideoTrimmerView: UICollectionViewDelegate, UICollectionViewDataSource,UICollectionViewDelegateFlowLayout {
+extension VideoTrimmerView: UICollectionViewDelegate, UICollectionViewDataSource,UICollectionViewDelegateFlowLayout,UIGestureRecognizerDelegate {
     //MARK:Public Func
     
     public func updateCurrentTime(_ currentTime: Double){
@@ -147,19 +148,30 @@ extension VideoTrimmerView: UICollectionViewDelegate, UICollectionViewDataSource
     }
     
     //MARK: Gestures
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        let point = gestureRecognizer.location(in: self)
+        let effectWidth = CGFloat(40)
+        let effectRect = CGRect(x: point.x - effectWidth/2, y: 0, width: effectWidth, height: height)
+        if effectRect.intersects(leftThumView.frame) || effectRect.intersects(rightThumView.frame) || effectRect.intersects(slider.frame){
+            return true
+        }else{
+            return false
+        }
+    }
+    
     @objc private func PanAction(sender: UIPanGestureRecognizer){
         switch sender.state {
         case .began:
             let point = sender.location(in: self)
             let effectWidth = CGFloat(40)
             let effectRect = CGRect(x: point.x - effectWidth/2, y: 0, width: effectWidth, height: height)
-            if effectRect.contains(leftThumView.center) {
+            if effectRect.intersects(leftThumView.frame) {
                 panType = .leftThum
                 imageCollectionView.isScrollEnabled = false
-            } else if effectRect.contains(rightThumView.center){
+            } else if effectRect.intersects(rightThumView.frame){
                 panType = .rightThum
                 imageCollectionView.isScrollEnabled = false
-            } else if effectRect.contains(slider.center){
+            } else if effectRect.intersects(slider.frame){
                 panType = .slider
                 imageCollectionView.isScrollEnabled = false
             }else{
@@ -175,22 +187,30 @@ extension VideoTrimmerView: UICollectionViewDelegate, UICollectionViewDataSource
             case .leftThum:
                 let point = sender.location(in: self)
                 let minX = CGFloat(0)
-                let maxX =  rightThumView.x -  minLength * perFrameWidth
-                if point.x >= minX && point.x <= maxX {
-                    leftThumView.x = point.x
-                    leftMaskView.width = leftThumView.right
-                    slider.centerX = leftMaskView.right + sliderWidth/2
+                let maxX =  rightThumView.x -  minLength * perFrameWidth - thumWidth
+                var leftX = point.x
+                if point.x < minX{
+                    leftX = minX
+                }else if point.x > maxX {
+                    leftX = maxX
                 }
+                leftThumView.x = leftX
+                leftMaskView.width = leftThumView.right
+                slider.centerX = leftMaskView.right + sliderWidth/2
                 break
             case .rightThum:
                 let point = sender.location(in: self)
                 let minX = leftThumView.right + minLength * perFrameWidth
                 let maxX =  width - thumWidth
-                if point.x >= minX && point.x <= maxX {
-                    rightThumView.x = point.x
-                    rightMaskView.x = rightThumView.left
-                    rightMaskView.width = width - rightThumView.left
+                var rightX = point.x
+                if point.x < minX{
+                    rightX = minX
+                }else if point.x > maxX {
+                    rightX = maxX
                 }
+                rightThumView.x = rightX
+                rightMaskView.x = rightThumView.left
+                rightMaskView.width = width - rightThumView.left
                 break
             case .slider:
                 let point = sender.location(in: self)

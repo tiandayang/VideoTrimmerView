@@ -47,6 +47,7 @@ class ViewController: UIViewController, VideoTrimmerViewDelegate {
         self.startTime = startTime
         self.endTime = endTime
         self.seek(self.startTime)
+        print("startTime:\(startTime) endTime:\(endTime) duration:\(endTime - startTime)")
     }
     
     func trimmerViewSliderChange(startTime: CGFloat) {
