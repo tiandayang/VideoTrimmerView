@@ -221,7 +221,7 @@ extension VideoTrimmerView: UICollectionViewDelegate, UICollectionViewDataSource
                 }
                 
                 let contentOffsetX = imageCollectionView.contentOffset.x
-                let leftOffset = slider.left
+                let leftOffset = slider.left - thumWidth
                 let startTime = (contentOffsetX + leftOffset)/perFrameWidth
                 delegate?.trimmerViewSliderChange(startTime: startTime)
                 break
